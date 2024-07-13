@@ -45,7 +45,7 @@ func main() {
     connection.Write(httpResponse(http.StatusOK, "OK"))
     fmt.Println("Correct link")
   } else {
-    connection.Write(httpResponse(http.StatusNotFound, "Not found"))
+    connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
     fmt.Println("Incorrect link")
   }
 
