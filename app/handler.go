@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 )
 
 // This code is for a handler and http request. Makes adding endpoints easier.
