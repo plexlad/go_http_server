@@ -5,7 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strings"
+//  "strings"
 )
 
 const (
@@ -51,31 +51,49 @@ func main() {
   requestBuffer := make([]byte, 4096) // big buffer
 
   connection.Read(requestBuffer)
-  requestString := string(requestBuffer)
-  parsedRequest := strings.Split(requestString, " ") // In format [info, headers, body]
+//  requestString := string(requestBuffer)
+//  parsedRequest := strings.Split(requestString, " ") // In format [info, headers, body]
 
-  fmt.Println(requestString)
-  
-  // Checks for echo
-  // TODO: Make an endpoint handler (map that refers to function?)
-  if strings.HasPrefix(requestString, "GET /echo/") {
-    // Status is ok
-    // Convoluted code that works
-    // Route data is the data of the root
-    routeData := strings.Split(parsedRequest[1], "/")
-    if len(routeData) > 1 {
-      dataToEcho := routeData[2]
-      responseHeaders := fmt.Sprintf("Content-Type: %s\r\nContent-Length: %d\r\n", "text/plain", len(routeData[2]))
-      connection.Write(httpResponseWithData(http.StatusOK, "OK", responseHeaders, dataToEcho))
-      fmt.Println("Correct link")
-    } else {
-      connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
-      fmt.Println("Incorrect link")
+  // Create a new handler as well as a request to handle
+  handler := new(HttpHandler)
+  request := ParseHttpRequest(requestBuffer, connection)
+
+  // Returns OK status if there is no route data
+  // Register the server route
+  handler.RegisterRoute("/", func(request HttpRequest) error {
+    if request.RouteData == "" && request.Method == "GET" {
+      request.Connection.Write(httpResponse(http.StatusOK, "OK"))
+      fmt.Println("Valid link")
+      return nil
     }
-  } else {
-    // Status is incorrect
-    connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
-    fmt.Println("Incorrect link")
+
+    request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
+    fmt.Println("Invalid link")
+    return nil
+  })
+
+  // Register echo server
+  handler.RegisterRoute("/echo/", func(request HttpRequest) error {
+    if request.Method == "GET" {
+      // Create headers
+      responseHeader := fmt.Sprintf("Content-Type: %s\r\nContent-Length: %d\r\n", "text/plain", len(request.RouteData))
+      // Send the response
+      request.Connection.Write(httpResponseWithData(http.StatusOK, "OK", responseHeader, request.RouteData))
+      fmt.Println("Valid link")
+      return nil
+    }
+
+    // Send the incorrect response if method is not GET
+    request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
+    fmt.Println("Invalid link")
+    return nil
+  })
+
+  // Handle the request with the handler!
+  err = handler.HandleRequest(request)
+  if err != nil {
+    fmt.Println("Error: " + err.Error())
+    return
   }
 
   fmt.Println("Responded")
