@@ -30,14 +30,12 @@ func ParseHttpRequest(rawData []byte, connection net.Conn) HttpRequest {
   
   // Gets the request info and parses it into a slice
   requestInfo := strings.Split(parsedLines[0], " ")
+  requestInfo[1] = strings.Trim(requestInfo[1], "/")
   
   // Parses the route to get the data. Just raw words for the route
-  parsedRoute := strings.Split(strings.Trim(requestInfo[1], "/"), "/")
+  parsedRoute := strings.Split(requestInfo[1], "/")
   // Super messy extracting of data from route
-  routeBytesParsing := []byte(requestInfo[1])
-  fmt.Println(parsedRoute[0])
-  routeBytesParsing = routeBytesParsing[len(parsedRoute[0])+2:len(routeBytesParsing)]
-  routeData := string(routeBytesParsing)
+  routeData := strings.TrimPrefix(requestInfo[1], parsedRoute[0] + "/")
   
   // Set the header key value map
   header := make(map[string]string)
