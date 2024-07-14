@@ -14,7 +14,8 @@ type HttpRequest struct {
   Connection net.Conn
   Method     string
   Route      string
-  RouteData  string // The part at the end of the route
+  RouteRoot  string // The original link
+  RouteData  string // The part after the root
   Protocol   string
   Header     map[string]string 
   Body       string
@@ -30,9 +31,13 @@ func ParseHttpRequest(rawData []byte, connection net.Conn) HttpRequest {
   // Gets the request info and parses it into a slice
   requestInfo := strings.Split(parsedLines[0], " ")
   
-  // Parses the route to get the data at the end
-  parsedRoute := strings.Split(requestInfo[1], "/")
-  routeData := parsedRoute[len(parsedRoute)-1]
+  // Parses the route to get the data. Just raw words for the route
+  parsedRoute := strings.Split(strings.Trim(requestInfo[1], "/"), "/")
+  // Super messy extracting of data from route
+  routeBytesParsing := []byte(requestInfo[1])
+  fmt.Println(parsedRoute[0])
+  routeBytesParsing = routeBytesParsing[len(parsedRoute[0])+2:len(routeBytesParsing)]
+  routeData := string(routeBytesParsing)
   
   // Set the header key value map
   header := make(map[string]string)
@@ -48,6 +53,7 @@ func ParseHttpRequest(rawData []byte, connection net.Conn) HttpRequest {
     connection,
     requestInfo[0], // Method
     requestInfo[1], // Route
+    parsedRoute[0], // Route root
     routeData,      // Route data
     requestInfo[2], // Protocol
     
@@ -65,7 +71,7 @@ type HttpHandler struct {
 // The added functionality can include glob support, etc.
 // Consider using a binary tree for the route handling.
 
-// Registers a route and its function handler
+// Registers a route and its function handler. Only register a route that is one word
 func (h *HttpHandler) RegisterRoute(route string, handler func(HttpRequest) error) error {
   // Removes slash from the start and beginning for easier parsing
   parsedRoute := strings.Trim(route, "/")
@@ -84,10 +90,7 @@ func (h *HttpHandler) HandleRequest(request HttpRequest) error {
   parsedRequestRoute := strings.Split(strings.Trim(request.Route, "/"), "/")
 
   // Gets the base of the route to find the handler
-  baseRequestRoute := ""
-  for _, routeSection := range parsedRequestRoute {
-    baseRequestRoute = fmt.Sprintf("%s/%s", baseRequestRoute, routeSection)
-  }
+  baseRequestRoute := parsedRequestRoute[0]
 
   // Remove the slashes for use with Routes
   baseRequestRoute = strings.Trim(baseRequestRoute, "/")
@@ -95,19 +98,11 @@ func (h *HttpHandler) HandleRequest(request HttpRequest) error {
   fmt.Printf("baseRequestRoute = '%s'\n", baseRequestRoute)
 
   // Checks both route and route data
+
   handlerFunc, ok := h.Routes[baseRequestRoute]
   if !ok {
-    for _, routeSection := range parsedRequestRoute[:len(parsedRequestRoute)-1] {
-      baseRequestRoute = fmt.Sprintf("%s/%s", baseRequestRoute, routeSection)
-    }
-
-    fmt.Printf("baseRequestRoute = '%s'\n", baseRequestRoute)
-
-    handlerFunc, ok = h.Routes[baseRequestRoute]
-    if !ok {
-      request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
-      return NewError(RouteNotFoundError, "Invalid route in HttpRequest")
-    }
+    request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
+    return NewError(RouteNotFoundError, "Invalid route in HttpRequest")
   }
 
   return handlerFunc(request)
