@@ -61,6 +61,28 @@ func main() {
     return nil
   })
 
+  server.RegisterRoute("/files/", func(request HttpRequest) error {
+    if request.Method == "GET" && request.RouteData != "" {
+      // Serves files from a directory
+      fileAddress := fmt.Sprintf("/tmp/%s", request.RouteData)
+      data, err := os.ReadFile(fileAddress)
+      if err != nil {
+        fmt.Println("Issue serving file, error: ", err.Error())
+        request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
+        return nil
+      }
+
+      responseHeader := fmt.Sprintf("Content-Type: %s\r\nContent-Length: %d\r\n", "application/octet-stream", len(data))
+      request.Connection.Write(httpResponseWithData(http.StatusOK, "OK", responseHeader, string(data)))
+      fmt.Println("file: Valid link")
+      return nil
+    }
+
+    request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
+    fmt.Println("Invalid link")
+    return nil
+  })
+
   // Registers the user agent header example endpoint
   // Sends the user agent back to the user
   server.RegisterRoute("/user-agent/", func(request HttpRequest) error {
