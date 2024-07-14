@@ -64,7 +64,8 @@ func main() {
   server.RegisterRoute("/files/", func(request HttpRequest) error {
     if request.Method == "GET" && request.RouteData != "" {
       // Serves files from a directory
-      fileAddress := fmt.Sprintf("/tmp/%s", request.RouteData)
+      dir := os.Args[2]
+      fileAddress := fmt.Sprintf("%s%s", dir, request.RouteData)
       data, err := os.ReadFile(fileAddress)
       if err != nil {
         fmt.Println("Issue serving file, error: ", err.Error())
