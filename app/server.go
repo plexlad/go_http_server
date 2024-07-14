@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 )
 
 const (
@@ -83,10 +84,10 @@ func main() {
       fmt.Println("POST")
       dir := os.Args[2]
       fileAddress := fmt.Sprintf("%s%s", dir, request.RouteData)
-      err := os.WriteFile(fileAddress, []byte(request.Body), 0644)
+      err := os.WriteFile(fileAddress, []byte(strings.Trim(request.Body, "\x00")), 0644)
       if err != nil {
         fmt.Println("Issue writing file, error: ", err.Error())
-        request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
+        request.Connection.Write(httpResponse(http.StatusInternalServerError, "File Write Error"))
         return nil
       }
       request.Connection.Write(httpResponse(http.StatusCreated, "Created"))
