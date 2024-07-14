@@ -66,6 +66,7 @@ func main() {
       // Serves files from a directory
       dir := os.Args[2]
       fileAddress := fmt.Sprintf("%s%s", dir, request.RouteData)
+      // Reads data from the file
       data, err := os.ReadFile(fileAddress)
       if err != nil {
         fmt.Println("Issue serving file, error: ", err.Error())
@@ -76,6 +77,20 @@ func main() {
       responseHeader := fmt.Sprintf("Content-Type: %s\r\nContent-Length: %d\r\n", "application/octet-stream", len(data))
       request.Connection.Write(httpResponseWithData(http.StatusOK, "OK", responseHeader, string(data)))
       fmt.Println("file: Valid link")
+      return nil
+
+    } else if request.Method == "POST" && request.RouteData != "" {
+      // Creates files from a directory
+      fmt.Println("POST")
+      dir := os.Args[2]
+      fileAddress := fmt.Sprintf("%s%s", dir, request.RouteData)
+      err := os.WriteFile(fileAddress, []byte(request.Body), 0644)
+      if err != nil {
+        fmt.Println("Issue writing file, error: ", err.Error())
+        request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
+        return nil
+      }
+      request.Connection.Write(httpResponse(http.StatusCreated, "Created"))
       return nil
     }
 
