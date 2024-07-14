@@ -93,7 +93,7 @@ func main() {
   // Sends the user agent back to the user
   handler.RegisterRoute("/user-agent/", func(request HttpRequest) error {
     if request.Method == "GET" {
-      responseHeader := fmt.Sprintf("Content-Type: %s\r\nContent-Length: %d\r\n", "text/plain", len(request.RouteData))
+      responseHeader := fmt.Sprintf("Content-Type: %s\r\nContent-Length: %d\r\n", "text/plain", len(request.Header["User-Agent"]))
       request.Connection.Write(httpResponseWithData(http.StatusOK, "OK", responseHeader, request.Header["User-Agent"]))
       fmt.Println("user-agent: Valid link")
       return nil
