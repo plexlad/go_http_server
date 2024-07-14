@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"strings"
 )
 
@@ -104,6 +105,7 @@ func (h *HttpHandler) HandleRequest(request HttpRequest) error {
 
     handlerFunc, ok = h.Routes[baseRequestRoute]
     if !ok {
+      request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
       return NewError(RouteNotFoundError, "Invalid route in HttpRequest")
     }
   }
