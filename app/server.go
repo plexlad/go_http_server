@@ -89,6 +89,21 @@ func main() {
     return nil
   })
 
+  // Registers the user agent header example endpoint
+  // Sends the user agent back to the user
+  handler.RegisterRoute("/user-agent/", func(request HttpRequest) error {
+    if request.Method == "GET" {
+      responseHeader := fmt.Sprintf("Content-Type: %s\r\nContent-Length: %d\r\n", "text/plain", len(request.RouteData))
+      request.Connection.Write(httpResponseWithData(http.StatusOK, "OK", responseHeader, request.Header["User-Agent"]))
+      fmt.Println("user-agent: Valid link")
+      return nil
+    }
+    
+    request.Connection.Write(httpResponse(http.StatusNotFound, "Not Found"))
+    fmt.Println("user-agent: Invalid link")
+    return nil
+  })
+
   // Handle the request with the handler!
   err = handler.HandleRequest(request)
   if err != nil {

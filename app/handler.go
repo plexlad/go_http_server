@@ -84,16 +84,28 @@ func (h *HttpHandler) HandleRequest(request HttpRequest) error {
 
   // Gets the base of the route to find the handler
   baseRequestRoute := ""
-  for _, routeSection := range parsedRequestRoute[:len(parsedRequestRoute)-1] {
+  for _, routeSection := range parsedRequestRoute {
     baseRequestRoute = fmt.Sprintf("%s/%s", baseRequestRoute, routeSection)
   }
 
   // Remove the slashes for use with Routes
   baseRequestRoute = strings.Trim(baseRequestRoute, "/")
 
+  fmt.Printf("baseRequestRoute = '%s'\n", baseRequestRoute)
+
+  // Checks both route and route data
   handlerFunc, ok := h.Routes[baseRequestRoute]
   if !ok {
-    return NewError(RouteNotFoundError, "Invalid route in HttpRequest")
+    for _, routeSection := range parsedRequestRoute[:len(parsedRequestRoute)-1] {
+      baseRequestRoute = fmt.Sprintf("%s/%s", baseRequestRoute, routeSection)
+    }
+
+    fmt.Printf("baseRequestRoute = '%s'\n", baseRequestRoute)
+
+    handlerFunc, ok = h.Routes[baseRequestRoute]
+    if !ok {
+      return NewError(RouteNotFoundError, "Invalid route in HttpRequest")
+    }
   }
 
   return handlerFunc(request)
