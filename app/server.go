@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 )
 
 const (
@@ -12,18 +13,17 @@ const (
 )
 
 func httpResponse(statusCode int, optionalMessage string) []byte {
-  // TODO: Proper response HERE
   responseString := fmt.Sprintf("HTTP/1.1 %d %s\r\n\r\n", statusCode, optionalMessage)
   return []byte(responseString)
 }
 
-// TODO: Finish
 func httpResponseWithData(statusCode int, optionalMessage, headers, data string) []byte {
   responseString := fmt.Sprintf("HTTP/1.1 %d %s\r\n%s\r\n%s", statusCode, optionalMessage, headers, data)
   return []byte(responseString)
 }
 
 func main() {
+  // TODO: Add get and post handlers! Make the syntax way shorter
   server, err := NewServer("0.0.0.0", "4221")
   if err != nil {
     fmt.Println(err.Error())
